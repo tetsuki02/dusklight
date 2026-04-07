@@ -65,6 +65,9 @@ struct UserSettings {
 
         // Controls
         ConfigVar<bool> enableTurboKeybind;
+
+        // VR
+        ConfigVar<bool> vrCamera;
     } game;
 };
 

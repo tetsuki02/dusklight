@@ -136,6 +136,15 @@ namespace dusk {
                 ImGui::EndMenu();
             }
 
+            if (ImGui::BeginMenu("VR")) {
+                config::ImGuiCheckbox("VR Camera", getSettings().game.vrCamera);
+                if (ImGui::IsItemHovered()) {
+                    ImGui::SetTooltip("Places the camera at Link's eyes, facing where his head points");
+                }
+
+                ImGui::EndMenu();
+            }
+
             ImGui::EndMenu();
         }
     }

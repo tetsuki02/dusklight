@@ -53,6 +53,8 @@ UserSettings g_userSettings = {
 
         // Controls
         .enableTurboKeybind {"game.enableTurboKeybind", true},
+
+        .vrCamera {"game.vrCamera", false}
     },
 };
 
@@ -95,6 +97,7 @@ void registerSettings() {
     Register(g_userSettings.game.midnasLamentNonStop);
     Register(g_userSettings.game.enableTurboKeybind);
     Register(g_userSettings.game.fastSpinner);
+    Register(g_userSettings.game.vrCamera);
 }
 
 // Transient settings

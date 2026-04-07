@@ -23,6 +23,10 @@
 #include <cmath>
 #include <cstring>
 
+#if TARGET_PC
+#include "dusk/settings.h"
+#endif
+
 #if DEBUG
 #include "d/d_debug_pad.h"
 #include "d/d_debug_camera.h"
@@ -1355,6 +1359,20 @@ bool dCamera_c::Run() {
     clrFlag(0x1000);
     mTagCamTool.Clr();
     field_0x89c.Clr();
+
+#if TARGET_PC
+    if (dusk::getSettings().game.vrCamera && link != nullptr) {
+        MtxP headMtx = link->getHeadMtx();
+        cXyz headForward(headMtx[0][0], headMtx[1][0], headMtx[2][0]);
+
+        // place eye slightly in front of Link's eye position, looking forward
+        static constexpr f32 EYE_FORWARD_OFFSET = 20.0f;
+        static constexpr f32 CENTER_DISTANCE = 200.0f;
+        mEye = mViewCache.mEye = link->eyePos + headForward * EYE_FORWARD_OFFSET;
+        mCenter = mViewCache.mCenter = mEye + headForward * CENTER_DISTANCE;
+    }
+#endif
+
     return sp0F;
 }
 

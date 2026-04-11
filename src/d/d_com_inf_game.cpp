@@ -25,6 +25,14 @@
 #include <cstdio>
 #include <cstring>
 
+#include "dusk/logging.h"
+
+#if TARGET_PC
+#include "dusk/randomizer/randomizer.hpp"
+#include "dusk/randomizer/utility/yaml.hpp"
+#endif
+
+
 void dComIfG_play_c::ct() {
     mWindowNum = 0;
     mParticle = NULL;
@@ -2272,6 +2280,58 @@ int dComIfGd_setShadow(u32 param_0, s8 param_1, J3DModel* param_2, cXyz* param_3
         return param_0;
     }
 }
+
+#if TARGET_PC
+void dComIfGs_setupRandomizerSave() {
+    randomizer::Randomizer randomizer;
+    randomizer.Generate();
+    auto world = randomizer.GetWorlds()[0].get();
+
+    // Set starting flags
+    auto startFlags = LoadYAML(RANDO_DATA_PATH "startflags.yaml");
+    // Event Flags
+    for (const auto& flagNode : startFlags["EventFlags"]) {
+        if (flagNode.IsScalar()) {
+            const auto& flag = flagNode.as<u16>();
+            dComIfGs_onEventBit(flag);
+        } else if (flagNode.IsMap()) {
+            const auto& condition = flagNode.begin()->first.as<std::string>();
+            if (world->EvaluateSettingCondition(condition)) {
+                DuskLog.debug("Setting flags for {}", condition);
+                for (const auto& conditionalFlag : flagNode.begin()->second) {
+                    const auto& flag = conditionalFlag.as<u16>();
+                    dComIfGs_onEventBit(flag);
+                }
+            }
+        }
+    }
+
+    // Region Flags
+    for (const auto& regionNode : startFlags["RegionFlags"]) {
+        const auto& region = regionNode.first.as<std::string>();
+        const auto& index = regionNode.second["Index"].as<int>();
+        const auto& flags = regionNode.second["Flags"];
+        DuskLog.debug("Setting region flags for {}", region);
+        // This seems kinda scuffed so maybe we change it later
+        for (const auto& flagNode : flags) {
+            if (flagNode.IsScalar()) {
+                const auto& flag = flagNode.as<int>();
+                dComIfGs_onRegionFlag(index, flag);
+            } else if (flagNode.IsMap()) {
+                const auto& condition = flagNode.begin()->first.as<std::string>();
+                if (world->EvaluateSettingCondition(condition)) {
+                    for (const auto& conditionalFlag : flagNode.begin()->second) {
+                        const auto& flag = conditionalFlag.as<int>();
+                        dComIfGs_onRegionFlag(index, flag);
+                    }
+                }
+            }
+        }
+    }
+
+    DuskLog.debug("Created Rando Save");
+}
+#endif
 
 void dComIfGs_gameStart() {
     dComIfGp_offEnableNextStage();

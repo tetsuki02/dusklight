@@ -1268,6 +1268,10 @@ int dComIfGd_setShadow(u32 param_0, s8 param_1, J3DModel* param_2, cXyz* param_3
                        f32 param_5, f32 param_6, f32 param_7, cBgS_PolyInfo& param_8,
                        dKy_tevstr_c* param_9, s16 param_10, f32 param_11, TGXTexObj* param_12);
 
+#if TARGET_PC
+void dComIfGs_setupRandomizerSave();
+#endif
+
 inline dSv_info_c* dComIfGs_getSaveInfo() {
     return &g_dComIfG_gameInfo.info;
 }
@@ -1929,6 +1933,16 @@ inline void dComIfGs_setOptVibration(u8 i_status) {
 inline u8 dComIfGs_getPalLanguage() {
     return g_dComIfG_gameInfo.info.getPlayer().getConfig().getPalLanguage();
 }
+
+#if TARGET_PC
+// Kinda hacky, but will do for now
+inline void dComIfGs_onRegionFlag(int i_stageNo, int i_no) {
+    auto regionFlags = reinterpret_cast<u8*>(&g_dComIfG_gameInfo.info.getSavedata().getSave(i_stageNo).getBit());
+    const int offset = i_no / 8;
+    const int shift = i_no % 8;
+    regionFlags[offset] |= (0x80 >> shift);
+}
+#endif
 
 inline BOOL dComIfGs_isSaveTbox(int i_stageNo, int i_no) {
     return g_dComIfG_gameInfo.info.getSavedata().getSave(i_stageNo).getBit().isTbox(i_no);

@@ -1535,6 +1535,7 @@ void dFile_select_c::nameInput2() {
     case 2:
         dComIfGs_setHorseName(mpName->getInputStrPtr());
         mIsSelectEnd = true;
+        dComIfGs_setupRandomizerSave();
         mDataSelProc = DATASELPROC_NEXT_MODE_WAIT;
     }
 }
@@ -5601,4 +5602,3 @@ void dFile_select3D_c::calcViewMtx(Mtx param_0) {
     cXyz pos2(0.0f, 1.0f, 0.0f);
     cMtx_lookAt(param_0, &pos1, &cXyz::Zero, &pos2, 0);
 }
-

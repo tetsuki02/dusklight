@@ -7,7 +7,8 @@ function(add_dusk_mod target_name)
         message(FATAL_ERROR "add_dusk_mod: MOD_JSON is required")
     endif()
 
-    add_library(${target_name} SHARED ${ARG_SOURCES})
+    add_library(${target_name} SHARED ${ARG_SOURCES}
+        "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/dusk_imgui_ctx.cpp")
     set_target_properties(${target_name} PROPERTIES PREFIX "" WINDOWS_EXPORT_ALL_SYMBOLS ON)
     target_compile_features(${target_name} PRIVATE cxx_std_20)
     target_link_libraries(${target_name} PRIVATE dusk_game_headers)

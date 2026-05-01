@@ -1733,6 +1733,9 @@ public:
     int checkNewItemChange(u8 i_selItemIdx);
     void deleteEquipItem(BOOL i_isPlaySound, BOOL i_isDeleteKantera);
     void setLight();
+    #if TARGET_PC
+    void setGhostLanternLight();
+    #endif
     void setFrontRollCrashShock(u8);
     void changeWarpMaterial(daAlink_c::daAlink_WARP_MAT_MODE i_matMode);
     void commonProcInit(daAlink_c::daAlink_PROC i_procID);
@@ -4383,7 +4386,7 @@ public:
     /* 0x03194 */ int field_0x3194;
     /* 0x03198 */ int field_0x3198;
     /* 0x0319C */ int field_0x319c;
-    /* 0x0319C */ int ghostLanternFlameEffect;
+    /* 0x0319C */ s32 ghostLanternFlameEffect[2];
     /* 0x031A0 */ u32 mModeFlg;
     /* 0x031A4 */ int field_0x31a4;
     /* 0x031A8 */ u32 field_0x31a8[2];
@@ -4453,6 +4456,9 @@ public:
     /* 0x033F4 */ f32 field_0x33f4;
     /* 0x033F8 */ f32 field_0x33f8;
     /* 0x033FC */ f32 field_0x33fc;
+    #if TARGET_PC
+    /* 0x033FC */ f32 current_ghost_lantern_light_power;
+    #endif
     /* 0x03400 */ f32 field_0x3400;
     /* 0x03404 */ f32 field_0x3404;
     /* 0x03408 */ f32 field_0x3408;
@@ -6824,6 +6830,9 @@ public:
     static daAlinkHIO_boom_c0 const mBoomerang;
     static daAlinkHIO_bomb_c0 const mBomb;
     static daAlinkHIO_huLight_c0 const mLanternPL;
+    #if TARGET_PC
+    static daAlinkHIO_huLight_c0 const mGhostLanternPL;
+    #endif
     static daAlinkHIO_kandelaar_c0 const mLantern;
     static daAlinkHIO_fmChain_c0 const mFmChain;
     static daAlinkHIO_magneBoots_c0 const mIronBoots;

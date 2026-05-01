@@ -164,7 +164,7 @@ int daAlink_c::ghostLanternModelCallBack() {
         mDoMtx_stack_c::ZXYrotM(var_r28, var_r29, var_r27);
     }
 
-    static Vec const ghostLanternOffset = {0.0f, -40.0f, 0.0f};
+    static Vec const ghostLanternOffset = {0.0f, -20.0f, 0.0f};
     mDoMtx_stack_c::multVec(&ghostLanternOffset, &mGhostLanternFlamePos);
 
     ghost_lantern_0x3618 = (mGhostLanternFlamePos - ghost_lantern_0x3624) * 0.9f;

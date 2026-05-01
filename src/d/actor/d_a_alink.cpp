@@ -6099,6 +6099,7 @@ void daAlink_c::setItemMatrix(int param_0) {
             mDoMtx_stack_c::copy(mpLinkModel->getAnmMtx(mLeftItemJntNo));
             mDoMtx_stack_c::transM(-2.0f, -0.1f, -0.7f);
             mDoMtx_stack_c::XYZrotM(cM_deg2s(100.0f), cM_deg2s(9.3f), cM_deg2s(183.0f));
+            mDoMtx_stack_c::scaleM(0.75f, 0.75f, 0.75f);
             mpGhostLanternModel->setBaseTRMtx(mDoMtx_stack_c::get());
 
             modelCalc(mpGhostLanternModel);
@@ -14842,6 +14843,43 @@ void daAlink_c::deleteEquipItem(BOOL i_isPlaySound, BOOL i_isDeleteKantera) {
     }
 }
 
+#if TARGET_PC
+void daAlink_c::setGhostLanternLight() {
+    const daAlinkHIO_huLight_c1* light_m = &mpHIO->mItem.mGhostLanternPL.m;
+
+    BOOL var_r28 = false;
+
+    f32 lightPower = 0.0f;
+    daE_HP_c* foundPoe = (daE_HP_c*)fopAcM_Search(srchPoe, this);
+    if (mEquipItem == dItemNo_LENS_OF_TRUTH_e && foundPoe != NULL) {
+        lightPower = 1.0f;
+    }
+
+    cLib_chaseF(&current_ghost_lantern_light_power, lightPower, 0.25f);
+
+    cXyz spB8;
+    f32 var_f27;
+    if (current_ghost_lantern_light_power > 0.0f) {
+        GXColor sp30 = {(u8)light_m->mColorR, (u8)light_m->mColorG, (u8)light_m->mColorB, 0xFF};
+        sp30.r = 120;
+        sp30.g = 150;
+        sp30.b = 150;
+
+        Vec sp5C = {0.0f, light_m->mYOffset, light_m->mZOffset};
+
+        f32 var_f26;
+        spB8 = mGhostLanternFlamePos;
+        var_f27 = 0.0f;
+        var_f26 = cM_sht2d(-shape_angle.y);
+
+        dKy_WolfEyeLight_set(&spB8, var_f27 + light_m->mXAngle, var_f26,
+            (light_m->mWidth * current_ghost_lantern_light_power) / light_m->mPower, &sp30, current_ghost_lantern_light_power,
+                             light_m->mAngleAttenuationType,
+                             light_m->mDistanceAttenuationType);
+    }
+}
+#endif
+
 void daAlink_c::setLight() {
     const daAlinkHIO_huLight_c1* light_m = &mpHIO->mItem.mLanternPL.m;
     BOOL var_r28 = false;
@@ -18593,15 +18631,27 @@ int daAlink_c::execute() {
             setCollision();
             setAttentionPos();
             setLight();
+            #if TARGET_PC
+            setGhostLanternLight();
+            #endif
             setEffect();
 
             if (mEquipItem == dItemNo_LENS_OF_TRUTH_e) {
-                cXyz effscale(1.0f, 1.0f, 1.0f);
-                ghostLanternFlameEffect =
-                    dComIfGp_particle_set(ghostLanternFlameEffect, ID_ZI_J_KANTERA_FIRE,
-                                          &mGhostLanternFlamePos, &shape_angle, &effscale);
+                cXyz effscale(0.75f, 0.75f, 0.75f);
+
+                static u16 particleNmaeDt[2] = {
+                    0x8789,
+                    0x878A,
+                };
+
+                for (s32 i = 0; i < 2; i++) {
+                    ghostLanternFlameEffect[i] = dComIfGp_particle_set(ghostLanternFlameEffect[i], particleNmaeDt[i],
+                                              &mGhostLanternFlamePos, 0, &effscale);
+                }
             } else {
-                stopDrawParticle(ghostLanternFlameEffect);
+                for (s32 i = 0; i < 2; i++) {
+                    stopDrawParticle(ghostLanternFlameEffect[i]);
+                }
             }
 
             if (mClothesChangeWaitTimer != 0) {
@@ -19470,13 +19520,17 @@ int daAlink_c::draw() {
     }
 
     if (mEquipItem == dItemNo_LENS_OF_TRUTH_e) {
-        JPABaseEmitter* emitter_gl = dComIfGp_particle_getEmitter(ghostLanternFlameEffect);
-        if (emitter_gl != NULL) {
-            daE_HP_c* foundPoe = (daE_HP_c*)fopAcM_Search(srchPoe, this);
-            if (checkPlayerNoDraw() || foundPoe == NULL) {
-                emitter_gl->stopDrawParticle();
-            } else {
-                emitter_gl->playDrawParticle();
+        daE_HP_c* foundPoe = (daE_HP_c*)fopAcM_Search(srchPoe, this);
+
+        for (s32 i = 0; i < 2; i++) {
+            JPABaseEmitter* emitter_gl = dComIfGp_particle_getEmitter(ghostLanternFlameEffect[i]);
+            if (emitter_gl != NULL) {
+                emitter_gl->setLocalTranslation({2.5f, -15.0f, 0.0f});
+                if (checkPlayerNoDraw() || foundPoe == NULL) {
+                    emitter_gl->stopDrawParticle();
+                } else {
+                    emitter_gl->playDrawParticle();
+                }
             }
         }
     }

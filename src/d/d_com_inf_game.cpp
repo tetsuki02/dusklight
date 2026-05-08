@@ -2923,11 +2923,11 @@ void dComIfGs_setupRandomizerSave() {
         execItemGet(dItemNo_Randomizer_DROP_CONTAINER03_e);
     }
 
-    // if (skipMinorCutscenes())
-    // {
-    //     dComIfGs_setAllLetterGet();
-    //     dComIfGs_setAllLetterRead();
-    // }
+    if (randoData.mSettings[RandomizerContext::SKIP_MINOR_CUTSCENES] == RandomizerContext::ON)
+    {
+        dComIfGs_setAllLetterGet();
+        dComIfGs_setAllLetterRead();
+    }
 
     if (dComIfGs_isEventBit(MIDNAS_DESPERATE_HOUR_COMPLETED))
     {

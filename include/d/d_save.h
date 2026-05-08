@@ -481,6 +481,11 @@ public:
     int isLetterReadFlag(int i_no) const;
     u8 getGetNumber(int i_no) { return mGetNumber[i_no]; }
     void setGetNumber(int i_no, u8 i_value) { mGetNumber[i_no] = i_value; }
+#if TARGET_PC
+    // For rando
+    void setAllLetterGet() { mLetterGetFlags[0] |= 0xFFFF;}
+    void setAllLetterRead() { mLetterReadFlags[0] |= 0xFFFF;}
+#endif
 
     /* 0x00 */ BE(u32) mLetterGetFlags[2];
     /* 0x08 */ BE(u32) mLetterReadFlags[2];

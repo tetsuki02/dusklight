@@ -1853,7 +1853,16 @@ inline u8 dComIfGs_getGetNumber(int i_no) {
 inline void dComIfGs_setGetNumber(int i_no, u8 i_value) {
     g_dComIfG_gameInfo.info.getPlayer().getLetterInfo().setGetNumber(i_no, i_value);
 }
+#if TARGET_PC
+// For rando
+inline void dComIfGs_setAllLetterGet() {
+    g_dComIfG_gameInfo.info.getPlayer().getLetterInfo().setAllLetterGet();
+}
 
+inline void dComIfGs_setAllLetterRead() {
+    g_dComIfG_gameInfo.info.getPlayer().getLetterInfo().setAllLetterRead();
+}
+#endif
 inline void dComIfGs_addFishNum(u8 param_0) {
     g_dComIfG_gameInfo.info.getPlayer().getFishingInfo().addFishCount(param_0);
 }

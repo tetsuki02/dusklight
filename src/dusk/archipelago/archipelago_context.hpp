@@ -42,11 +42,11 @@ namespace dusk::archi
         std::unordered_map<std::string, GameLocationInfo> m_locationItemInfo;
         std::map<int, bool> m_initLocationCollectState;
         AP_RoomInfo m_roomInfo;
+        std::string m_SettingsFile;
 
         // TEMP
         std::map<int, TEMP_GameItemInfo> m_apItemToGameItem;
         std::vector<TEMP_GameLocationInfo> m_apLocToGameLoc;
-        std::string m_apConfigPath;
 
         void LoadTempItemInfo();
 
@@ -118,9 +118,7 @@ namespace dusk::archi
 
         // AP -> Internal Rando Converters
 
-        static void SetAPConfigYamlPath(const std::string_view& path);
-
-        static bool GenerateConfigFromAP(randomizer::seedgen::config::Config& config);
+        static bool GenerateConfigFromAP(randomizer::seedgen::config::Config& config, const std::string& settingsStr);
 
         static int GetItemAtLocation(const std::string& locName);
 

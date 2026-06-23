@@ -10,24 +10,6 @@
 
 namespace dusk {
 
-constexpr std::array<SDL_DialogFileFilter, 2> kFileFilters{{
-    {"Archipelago Configuration File", "yaml"},
-    {"All Files", "*"},
-}};
-
-void FileDialogCallback(void*, const char* path, const char* error) {
-    if (path == nullptr || error != nullptr) {
-        return;
-    }
-
-    archi::ArchipelagoContext::SetAPConfigYamlPath(path);
-}
-
-void OpenApFilePicker() noexcept {
-    ShowFileSelect(&FileDialogCallback, nullptr, aurora::window::get_sdl_window(),
-        kFileFilters.data(), kFileFilters.size(), nullptr, false);
-}
-
 ImGuiArchipelagoDebug::ImGuiArchipelagoDebug() {
 
 }
@@ -64,10 +46,6 @@ void ImGuiArchipelagoDebug::drawWindow() {
 
     if (ImGui::InputText("Slot Name", m_slotNameInputBuffer, sizeof(m_slotNameInputBuffer))) {
         archi::ArchipelagoContext::SetSlotName(m_slotNameInputBuffer);
-    }
-
-    if (ImGui::Button("Set Archipelago Config Path")) {
-        OpenApFilePicker();
     }
 
     if (archi::ArchipelagoContext::IsConnected()) {

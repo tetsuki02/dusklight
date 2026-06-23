@@ -2,8 +2,6 @@
 #include <dusk/ui/string_button.hpp>
 
 #include <thread>
-
-#include "dusk/logging.h"
 #include "dusk/archipelago/archipelago_context.hpp"
 #include "m_Do/m_Do_audio.h"
 

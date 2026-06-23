@@ -18,37 +18,88 @@ namespace dusk::archi
 static constexpr int ARCHI_ITEM_OFFSET = 2320000;
 
 struct SettingsNameConvert {
+    static constexpr std::string kDefaultYes = "On";
+    static constexpr std::string kDefaultNo = "Off";
+
     std::string apName;
     std::string dusklightName;
-    bool invert = false;
+    std::vector<std::pair<std::string, std::string>> optionsConvert;
+
+    const std::string& tryGetOptionConvert(const std::string& option) const {
+        if (optionsConvert.empty()) {
+            if (option == "Yes")
+                return kDefaultYes;
+            if (option == "No")
+                return kDefaultNo;
+            return option;
+        }
+
+        for (const auto& value : optionsConvert) {
+            if (value.first == option) {
+                return value.second;
+            }
+        }
+        return option;
+    }
 };
 
 static auto sArchiSettingToDusklight = std::to_array<SettingsNameConvert>({
     {"", ""},
-    {"golden_bugs_shuffled", "Golden Bugs"},
-    {"sky_characters_shuffled", "Sky Characters"},
-    {"npc_items_shuffled", "Gifts From NPCs"},
-    {"shop_items_shuffled", "Shop Items"},
-    {"hidden_skills_shuffled", "Hidden Skills"},
-    // {"poe_shuffled", ""}, // poe shuffle is Overworld, Dungeon, All, or Vanilla, so special logic is needed to convert
-    // {"heart_piece_shuffled", ""},
-    // {"overworld_shuffled", ""},
-    // {"dungeons_shuffled", ""},
-    {"dungeon_rewards_progression", "Dungeon Rewards Can Be Anywhere"},
-    {"small_keys_on_bosses", "No Small Keys on Bosses", true},
-    {"skip_prologue", "Skip Prologue"},
-    {"faron_twilight_cleared", "Faron Twilight Cleared"},
-    {"eldin_twilight_cleared", "Eldin Twilight Cleared"},
-    {"lanayru_twilight_cleared", "Lanayru Twilight Cleared"},
-    {"skip_mdh", "Skip Midna's Desparate Hour"},
-    {"open_map", "Unlock Map Regions"},
-    {"increase_wallet", "Logic Increase Wallet Capacity"},
-    {"transform_anywhere", "Logic Transform Anywhere"},
-    {"bonks_do_damage", "Bonks Do Damage"},
-    {"skip_lakebed_entrance", "Lakebed Does Not Require Water Bombs"},
-    {"skip_arbiters_grounds_entrance", "Arbiters Does Not Require Bulblin Camp"},
-    {"skip_snowpeak_entrance", "Snowpeak Does Not Require Reekfish Scent"},
-    {"skip_city_in_the_sky_entrance", "City Does Not Require Filled Skybook"},
+    {"Golden Bugs Shuffled", "Golden Bugs"},
+    {"Sky Chracters Shuffled", "Sky Characters"},
+    {"NPC Items Shuffled", "Gifts From NPCs"},
+    {"Shop Items Shuffled", "Shop Items"},
+    {"Hidden Skills Shuffled", "Hidden Skills"},
+    {"Skip Prologue", "Skip Prologue"},
+    {"Faron Twilight Cleared", "Faron Twilight Cleared"},
+    {"Eldin Twilight Cleared", "Eldin Twilight Cleared"},
+    {"Lanayru Twilight Cleared", "Lanayru Twilight Cleared"},
+    {"Skip MDH", "Skip Midna's Desparate Hour"},
+    {"Open Map", "Unlock Map Regions"},
+    {"Increase Wallet", "Logic Increase Wallet Capacity"},
+    {"Transform Anywhere", "Logic Transform Anywhere"},
+    {"Bonks do Damage", "Bonks Do Damage"},
+    {"Lakebed Entrance Requirements", "Lakebed Does Not Require Water Bombs"},
+    {"Arbiters Grounds Entrance Requirements", "Arbiters Does Not Require Bulblin Camp"},
+    {"Snowpeak Entrance Requirements", "Snowpeak Does Not Require Reekfish Scent"},
+    {"City in the Sky Entrance Requirements", "City Does Not Require Filled Skybook"},
+    {"Goron Mines Entrance Requirements", "Goron Mines Entrance"},
+    {"Palace of Twilight Requirements", "Palace of Twilight Requirements"},
+    {"Faron Woods Logic", "Faron Woods Logic"},
+{"Starting ToD", "Starting Time of Day"},
+   {"Skip Major Cutscenes", "Skip Major Cutscenes"},
+{"Skip Minor Cutscenes", "Skip Minor Cutscenes"},
+   {"Open Door of Time", "Open Door of Time"},
+
+    {"Dungeon Rewards Progression", "Dungeon Rewards Can Be Anywhere", {
+         // these two are functionally identical in terms of tracker logic, so treat it as such
+         {"Anything", "On"},
+         {"Any Progressive", "On"},
+         {"Vanilla", "Off"},
+     }},
+    {"Small Key Settings", "Small Keys", {
+         {"Startwith", "Keysy"},
+     }},
+    {"Big Key Settings", "Big Keys", {
+         {"Startwith", "Keysy"},
+     }},
+    {"Map and Compass Settings", "Maps and Compasses", {
+         {"Startwith", "Start With"},
+     }},
+    {"Trap Frequency", "Trap Item Frequency", {
+         {"No Traps", "None"},
+     }},
+    {"Damage Magnification", "Logic Damage Multiplier", {
+         {"Ohko", "OHKO"},
+     }},
+    {"Logic Settings", "Logic Rules", {
+         {"Glitchless", "All Locations Reachable"},
+         {"Glitched", "Beatable Only"},
+    }},
+    {"Poes Shuffled", "Poe Souls", {
+        {"Yes", "All"},
+        {"No", "Vanilla"}
+    }}
 });
 
 ArchipelagoContext& instance() {
@@ -287,7 +338,7 @@ bool ArchipelagoContext::ConnectToServer(bool isBlocking) {
     });
 
     AP_SetItemRecvCallback([](AP_NetworkItem& item, bool notify) {
-        DuskLog.info("Item Receive Callback Called! Item: {} Notify: {}", item.item, notify);
+        DuskLog.debug("Item Receive Callback Called! Item: {} Notify: {}", item.item, notify);
         HandleItemReceived(item, notify);
     });
 
@@ -299,6 +350,15 @@ bool ArchipelagoContext::ConnectToServer(bool isBlocking) {
     AP_SetLocationInfoCallback([](std::vector<AP_NetworkItem> items) {
         DuskLog.info("Got {} Location Scouts from Server.", items.size());
         HandleReceiveLocationScout(items);
+    });
+
+    AP_RegisterSlotDataRawCallback("Settings", [](std::string data) {
+        DuskLog.info("Got Settings from Slot Data.");
+        instance().m_SettingsFile = data;
+    });
+
+    AP_RegisterSlotDataRawCallback("World Version", [](std::string data) {
+        DuskLog.info("TP APWorld Version: {}", data);
     });
 
     AP_Start();
@@ -610,24 +670,10 @@ void ArchipelagoContext::RequestAllLocationScout(bool isHint) {
     AP_SendLocationScouts(locations, isHint);
 }
 
-void ArchipelagoContext::SetAPConfigYamlPath(const std::string_view& path) {
-    instance().m_apConfigPath = path;
-}
-
-bool ArchipelagoContext::GenerateConfigFromAP(randomizer::seedgen::config::Config& config) {
-    if (instance().m_apConfigPath.empty()) {
-        DuskLog.warn("AP Config Path Empty!");
-        return false;
-    }
-
-    if (!std::filesystem::exists(instance().m_apConfigPath)) {
-        DuskLog.warn("AP Config Path does not exist!");
-        return false;
-    }
-
+bool ArchipelagoContext::GenerateConfigFromAP(randomizer::seedgen::config::Config& config, const std::string& settingsStr) {
     YAML::Node apConfigYaml;
     try {
-        apConfigYaml = YAML::LoadFile(instance().m_apConfigPath);
+        apConfigYaml = YAML::Load(settingsStr);
     }catch (YAML::BadFile& e) {
         DuskLog.warn("Failed to load AP Config YAML file!");
         return false;
@@ -637,192 +683,50 @@ bool ArchipelagoContext::GenerateConfigFromAP(randomizer::seedgen::config::Confi
     randomizer::seedgen::settings::Settings& settings = config.GetSettings();
 
     // update settings using ap config
-    for (const auto& apSettingEntry : apConfigYaml["Twilight Princess"]) {
+    for (const auto& apSettingEntry : apConfigYaml) {
         auto apSettingName = apSettingEntry.first.as<std::string>();
-
-        // ignore AP-only settings
-        if (apSettingName == "progression_balancing" ||
-            apSettingName == "accessibility" ||
-            apSettingName == "local_items" ||
-            apSettingName == "non_local_items" ||
-            apSettingName == "start_inventory" ||
-            apSettingName == "start_hints" ||
-            apSettingName == "start_location_hints" ||
-            apSettingName == "exclude_locations" ||
-            apSettingName == "priority_locations" ||
-            apSettingName == "start_inventory_from_pool")
-            continue;
+        auto apSettingValue = apSettingEntry.second.as<std::string>();
 
         const auto& settingConvert = GetAPSettingNameConvert(apSettingName);
 
         if (!settingConvert.apName.empty()) {
-            bool apSettingValue = apSettingEntry.second.as<bool>();
-
-            if (settingConvert.invert)
-                apSettingValue = !apSettingValue;
-
             auto& setting = settings.GetMap().at(settingConvert.dusklightName);
-
-            setting.SetCurrentOption(apSettingValue ? "On" : "Off");
-
-            continue;
-        }
-        if (apSettingName == "poe_shuffled") {
-            auto& setting = settings.GetMap().at("Poe Souls");
-            bool apSettingValue = apSettingEntry.second.as<bool>();
-
-            // this setting has more options, but the current apworld only has off or on for now.
-            setting.SetCurrentOption(apSettingValue ? "All" : "Vanilla");
-
-            continue;
-        }
-        // remaining settings will have string values
-
-        auto apSettingValue = apSettingEntry.second.as<std::string>();
-
-        // TODO: clean up this if-else hellscape
-
-        if (apSettingName == "castle_requirements") {
+            setting.SetCurrentOption(settingConvert.tryGetOptionConvert(apSettingValue));
+        } else if (apSettingName == "Castle Requirements") {
             auto& setting = settings.GetMap().at("Hyrule Barrier Requirements");
 
             // ap assumes max mirror shards/fused shadows/dungeons, so update those settings as well
 
-            if(apSettingValue == "open")
+            if(apSettingValue == "Open")
                 setting.SetCurrentOption("Open");
-            else if(apSettingValue == "vanilla")
+            else if(apSettingValue == "Vanilla")
                 setting.SetCurrentOption("Vanilla");
-            else if(apSettingValue == "fused_shadows") {
+            else if(apSettingValue == "Fused Shadows") {
                 setting.SetCurrentOption("Fused Shadows");
                 settings.GetMap().at("Hyrule Barrier Fused Shadows").SetCurrentOption("3");
-            }else if(apSettingValue == "mirror_shards") {
+            }else if(apSettingValue == "Mirror Shards") {
                 setting.SetCurrentOption("Mirror Shards");
                 settings.GetMap().at("Hyrule Barrier Mirror Shards").SetCurrentOption("4");
-            }else if(apSettingValue == "all_dungeons") {
+            }else if(apSettingValue == "All Dungeons") {
                 setting.SetCurrentOption("Dungeons");
                 settings.GetMap().at("Hyrule Barrier Dungeons").SetCurrentOption("8");
             }
-        }else if (apSettingName == "palace_requirements") {
-            auto& setting = settings.GetMap().at("Palace of Twilight Requirements");
-
-            if(apSettingValue == "open")
-                setting.SetCurrentOption("Open");
-            else if(apSettingValue == "vanilla")
-                setting.SetCurrentOption("Vanilla");
-            else if(apSettingValue == "fused_shadows")
-                setting.SetCurrentOption("Fused Shadows");
-            else if(apSettingValue == "mirror_shards")
-                setting.SetCurrentOption("Mirror Shards");
-
-        }else if (apSettingName == "faron_woods_logic") {
-            auto& setting = settings.GetMap().at("Faron Woods Logic");
-
-            if(apSettingValue == "open")
-                setting.SetCurrentOption("Open");
-            else if(apSettingValue == "closed")
-                setting.SetCurrentOption("Closed");
-        }else if (apSettingName == "small_key_settings") {
-            auto& setting = settings.GetMap().at("Small Keys");
-
-            if(apSettingValue == "vanilla")
-                setting.SetCurrentOption("Vanilla");
-            else if(apSettingValue == "own_dungeon")
-                setting.SetCurrentOption("Own Dungeon");
-            else if(apSettingValue == "any_dungeon")
-                setting.SetCurrentOption("Any Dungeon");
-            else if(apSettingValue == "anywhere")
-                setting.SetCurrentOption("Anywhere");
-            else if(apSettingValue == "startwith")
-                setting.SetCurrentOption("Keysy");
-
-        }else if (apSettingName == "big_key_settings") {
-            auto& setting = settings.GetMap().at("Big Keys");
-
-            if(apSettingValue == "vanilla")
-                setting.SetCurrentOption("Vanilla");
-            else if(apSettingValue == "own_dungeon")
-                setting.SetCurrentOption("Own Dungeon");
-            else if(apSettingValue == "any_dungeon")
-                setting.SetCurrentOption("Any Dungeon");
-            else if(apSettingValue == "anywhere")
-                setting.SetCurrentOption("Anywhere");
-            else if(apSettingValue == "startwith")
-                setting.SetCurrentOption("Keysy");
-
-        }else if (apSettingName == "map_and_compass_settings") {
-            auto& setting = settings.GetMap().at("Maps and Compasses");
-
-            if(apSettingValue == "vanilla")
-                setting.SetCurrentOption("Vanilla");
-            else if(apSettingValue == "own_dungeon")
-                setting.SetCurrentOption("Own Dungeon");
-            else if(apSettingValue == "any_dungeon")
-                setting.SetCurrentOption("Any Dungeon");
-            else if(apSettingValue == "anywhere")
-                setting.SetCurrentOption("Anywhere");
-            else if(apSettingValue == "startwith")
-                setting.SetCurrentOption("Keysy");
-
-        }else if (apSettingName == "trap_frequency") {
-            auto& setting = settings.GetMap().at("Trap Item Frequency");
-
-            if(apSettingValue == "no_traps")
-                setting.SetCurrentOption("None");
-            else if(apSettingValue == "few")
-                setting.SetCurrentOption("Few");
-            else if(apSettingValue == "many")
-                setting.SetCurrentOption("Many");
-            else if(apSettingValue == "mayhem")
-                setting.SetCurrentOption("Mayhem");
-            else if(apSettingValue == "nightmare")
-                setting.SetCurrentOption("Nightmare");
-
-        }else if (apSettingName == "damage_magnification") {
-            auto& setting = settings.GetMap().at("Logic Damage Multiplier");
-
-            if(apSettingValue == "vanilla")
-                setting.SetCurrentOption("Vanilla");
-            else if(apSettingValue == "double")
-                setting.SetCurrentOption("Double");
-            else if(apSettingValue == "triple")
-                setting.SetCurrentOption("Triple");
-            else if(apSettingValue == "quadruple")
-                setting.SetCurrentOption("Quadruple");
-            else if(apSettingValue == "ohko")
-                setting.SetCurrentOption("OHKO");
-
-        }else if (apSettingName == "goron_mines_entrance") {
-            auto& setting = settings.GetMap().at("Goron Mines Entrance");
-
-            if(apSettingValue == "closed")
-                setting.SetCurrentOption("Closed");
-            else if(apSettingValue == "no_wrestling")
-                setting.SetCurrentOption("No Wrestling");
-            else if(apSettingValue == "open")
-                setting.SetCurrentOption("Open");
-
-        }else if (apSettingName == "tot_entrance") {
+        }else if (apSettingName == "Temple of Time Entrance Requirements") {
             auto& setting = settings.GetMap().at("Sacred Grove Does Not Require Skull Kid");
             auto& setting2 = settings.GetMap().at("Temple of Time Sword Requirement");
 
-            if(apSettingValue == "closed") {
+            if(apSettingValue == "Closed") {
                 setting.SetCurrentOption("Off");
                 setting2.SetCurrentOption("Master Sword");
-            }else if (apSettingValue == "open_grove") {
+            }else if (apSettingValue == "Open Grove") {
                 setting.SetCurrentOption("On");
                 setting2.SetCurrentOption("Master Sword");
-            }else if (apSettingValue == "open") {
+            }else if (apSettingValue == "Open") {
                 setting.SetCurrentOption("On");
                 setting2.SetCurrentOption("None");
             }
-
-        }else if (apSettingName == "logic_rules") {
-            auto& setting = settings.GetMap().at("Logic Rules");
-
-            if(apSettingValue == "glitchless") {
-                setting.SetCurrentOption("All Locations Reachable");
-            }else if (apSettingValue == "glitched") { // this might not be the most direct translation
-                setting.SetCurrentOption("Beatable Only");
-            }
+        }else {
+            DuskLog.debug("Missing Setting: {} Value: {}", apSettingName, apSettingValue);
         }
     }
 
@@ -948,7 +852,12 @@ void ArchipelagoContext::GenerateLocalWorldData() {
         // creates base yamls at directory if they dont exist yet
         instance().m_config.LoadFromFile(workingDir / "settings.yaml", workingDir / "preferences.yaml");
 
-        GenerateConfigFromAP(instance().m_config);
+        if (instance().m_SettingsFile.empty()) {
+            DuskLog.fatal("Settings Data was not sent to client! Unable to generate world data.");
+            return;
+        }
+
+        GenerateConfigFromAP(instance().m_config, instance().m_SettingsFile);
 
         instance().m_config.WriteToFile(workingDir / "settings.yaml", workingDir / "preferences.yaml");
 

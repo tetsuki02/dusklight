@@ -12362,7 +12362,7 @@ int daAlink_c::checkNextAction(int param_0) {
         mMaxSpeed = mpHIO->mMove.m.mMaxSpeed * 0.75f;
     }
     if (isSprintActive()) {
-    mMaxSpeed *= 1.05f;
+    mMaxSpeed *= 2.0f;
     }
     if (checkEndResetFlg0(ERFLG0_UNK_100000) && mLinkAcch.ChkGroundHit() &&
         !checkModeFlg(MODE_PLAYER_FLY))

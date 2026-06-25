@@ -5454,6 +5454,16 @@ bool daAlink_c::checkWindSpeedOnAngleAnime(int param_0) const {
            ((field_0x2f8c == 1 || field_0x2f8c == 3) || (param_0 != 0 && field_0x2f8c == 2));
 }
 
+bool daAlink_c::isSprintRequested() const {
+    return mProcID == PROC_MOVE &&
+           mDoCPd_c::getHoldA(PAD_1) &&
+           mStickValue > 0.8f;
+}
+
+bool daAlink_c::isSprintActive() const {
+    return isSprintRequested();
+}
+
 bool daAlink_c::checkDashAnime() const {
     return checkUnderMove0BckNoArc(ANM_RUN) || checkUnderMove0BckNoArc(ANM_RUN_B);
 }
@@ -12350,9 +12360,11 @@ int daAlink_c::checkNextAction(int param_0) {
     } else if (checkSlope()) {
         mMaxSpeed = mpHIO->mSlide.m.mMaxClimbSpeed;
     } else {
-        mMaxSpeed = mpHIO->mMove.m.mMaxSpeed;
+        mMaxSpeed = mpHIO->mMove.m.mMaxSpeed * 0.60f;
     }
-
+    if (isSprintActive()) {
+    mMaxSpeed *= 1.05f;
+    }
     if (checkEndResetFlg0(ERFLG0_UNK_100000) && mLinkAcch.ChkGroundHit() &&
         !checkModeFlg(MODE_PLAYER_FLY))
     {

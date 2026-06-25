@@ -1811,6 +1811,8 @@ public:
     int execute();
     void setDrawHand();
     bool checkSwordDraw();
+    bool isSprintRequested() const;
+    bool isSprintActive() const;
     bool checkShieldDraw();
     bool checkItemDraw();
     int initShadowScaleLight();

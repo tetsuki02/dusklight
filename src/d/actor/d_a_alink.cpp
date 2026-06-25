@@ -5456,7 +5456,6 @@ bool daAlink_c::checkWindSpeedOnAngleAnime(int param_0) const {
 
 bool daAlink_c::isSprintRequested() const {
     return mProcID == PROC_MOVE &&
-           mDoCPd_c::getHoldA(PAD_1) &&
            mStickValue > 0.8f;
 }
 
@@ -12360,7 +12359,7 @@ int daAlink_c::checkNextAction(int param_0) {
     } else if (checkSlope()) {
         mMaxSpeed = mpHIO->mSlide.m.mMaxClimbSpeed;
     } else {
-        mMaxSpeed = mpHIO->mMove.m.mMaxSpeed * 0.60f;
+        mMaxSpeed = mpHIO->mMove.m.mMaxSpeed * 0.75f;
     }
     if (isSprintActive()) {
     mMaxSpeed *= 1.05f;
